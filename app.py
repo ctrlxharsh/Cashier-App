@@ -6,7 +6,12 @@ st.set_page_config(page_title="Cashier Reconciliation App", page_icon="💸", la
 
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap');
+
 /* Add a bit of custom styling to make it look professional */
+.main, * {
+    font-family: 'Noto Sans', 'Noto Sans Devanagari', sans-serif !important;
+}
 .main {
     background-color: #f8f9fa;
 }
@@ -24,6 +29,7 @@ st.markdown("""
 }
 h1, h2, h3 {
     color: #2c3e50;
+    font-weight: 600;
 }
 </style>
 """, unsafe_allow_html=True)
