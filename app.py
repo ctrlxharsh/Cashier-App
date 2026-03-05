@@ -9,8 +9,8 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap');
 
 /* Add a bit of custom styling to make it look professional */
-.main, * {
-    font-family: 'Noto Sans', 'Noto Sans Devanagari', sans-serif !important;
+html, body, [class*="st-"] {
+    font-family: 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
 }
 .main {
     background-color: #f8f9fa;
@@ -126,11 +126,13 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("📁 Upload Old Data")
-    old_file = st.file_uploader("Select Old Excel File", type=["xlsx", "xls"], key="old_file")
+    old_file = st.file_uploader("Select Old Excel File (MUST BE .xlsx)", type=["xlsx"], key="old_file")
 
 with col2:
     st.subheader("📁 Upload New Data")
-    new_file = st.file_uploader("Select New Excel File", type=["xlsx", "xls"], key="new_file")
+    new_file = st.file_uploader("Select New Excel File (MUST BE .xlsx)", type=["xlsx"], key="new_file")
+
+st.caption("💡 *Note: If your file is .xls or downloaded from a bank portal, please open it in Excel first and choose 'Save As -> Excel Workbook (*.xlsx)' before uploading.*")
 
 if old_file and new_file:
     try:
@@ -220,6 +222,10 @@ if old_file and new_file:
                     )
                 
     except Exception as e:
-        st.error(f"Error processing files: {str(e)}")
+        error_msg = str(e)
+        if "not a zip file" in error_msg.lower():
+            st.error("Error: The uploaded file is not a valid modern Excel (.xlsx) file. It might be an older format or a web page saved as Excel. Please open the file in Excel and 'Save As -> Excel Workbook (*.xlsx)' then try again.")
+        else:
+            st.error(f"Error processing files: {error_msg}")
 else:
     st.info("Please upload both Old and New Excel files to begin.")
