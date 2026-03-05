@@ -47,29 +47,31 @@ def load_excel_safely(uploaded_file):
         uploaded_file.seek(0)
         return pd.ExcelFile(uploaded_file, engine='openpyxl')
     except Exception as e:
-        err_str = str(e).lower()
-        if "zip" in err_str or "format" in err_str:
-            # Might be an old XLS or an HTML file masked as XLS (common from banking portals)
-            uploaded_file.seek(0)
-            try:
-                # Try reading as old XLS
-                return pd.ExcelFile(uploaded_file, engine='xlrd')
-            except Exception:
-                pass
-                
-            uploaded_file.seek(0)
-            try:
-                # Try reading as HTML table
-                dfs = pd.read_html(uploaded_file)
-                if dfs:
-                    output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        dfs[0].to_excel(writer, index=False, sheet_name='Data')
-                    output.seek(0)
-                    return pd.ExcelFile(output, engine='openpyxl')
-            except Exception:
-                pass
-        raise Exception("Could not parse file. It is not a valid modern Excel, legacy Excel, or HTML format.")
+        # If openpyxl fails, it might be an old XLS or an HTML file masked as XLS
+        uploaded_file.seek(0)
+        try:
+            # Try reading as old XLS
+            return pd.ExcelFile(uploaded_file, engine='xlrd')
+        except Exception:
+            pass
+            
+        uploaded_file.seek(0)
+        try:
+            # Try reading the raw content as HTML table (since bank XLS files are often just HTML tables)
+            file_content = uploaded_file.read()
+            # read_html needs a string or file-like object; we give it the raw bytes or decoded string
+            dfs = pd.read_html(io.StringIO(file_content.decode('utf-8', errors='ignore')))
+            if dfs:
+                # If we successfully parsed an HTML table, convert it into an in-memory openpyxl object
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    dfs[0].to_excel(writer, index=False, sheet_name='Data')
+                output.seek(0)
+                return pd.ExcelFile(output, engine='openpyxl')
+        except Exception as html_err:
+            pass
+            
+        raise Exception("File is neither a valid modern Excel (.xlsx), legacy Excel (.xls), nor HTML format. Please convert manually.")
 
 def match_entries(new_df, old_df, name_col, skip_cols):
     missing_in_old = []
