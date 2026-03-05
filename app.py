@@ -46,6 +46,36 @@ def clean_data(df):
             cleaned_df[col] = cleaned_df[col].astype(str).replace(r'[^a-zA-Z0-9\s]', '', regex=True).str.strip()
     return cleaned_df
 
+def load_excel_safely(uploaded_file):
+    try:
+        # First try normal modern Excel format
+        uploaded_file.seek(0)
+        return pd.ExcelFile(uploaded_file, engine='openpyxl')
+    except Exception as e:
+        err_str = str(e).lower()
+        if "zip" in err_str or "format" in err_str:
+            # Might be an old XLS or an HTML file masked as XLS (common from banking portals)
+            uploaded_file.seek(0)
+            try:
+                # Try reading as old XLS
+                return pd.ExcelFile(uploaded_file, engine='xlrd')
+            except Exception:
+                pass
+                
+            uploaded_file.seek(0)
+            try:
+                # Try reading as HTML table
+                dfs = pd.read_html(uploaded_file)
+                if dfs:
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        dfs[0].to_excel(writer, index=False, sheet_name='Data')
+                    output.seek(0)
+                    return pd.ExcelFile(output, engine='openpyxl')
+            except Exception:
+                pass
+        raise Exception("Could not parse file. It is not a valid modern Excel, legacy Excel, or HTML format.")
+
 def match_entries(new_df, old_df, name_col, skip_cols):
     missing_in_old = []
     mismatches = []
@@ -126,18 +156,16 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("📁 Upload Old Data")
-    old_file = st.file_uploader("Select Old Excel File (MUST BE .xlsx)", type=["xlsx"], key="old_file")
+    old_file = st.file_uploader("Select Old Excel File", type=["xlsx", "xls", "csv"], key="old_file")
 
 with col2:
     st.subheader("📁 Upload New Data")
-    new_file = st.file_uploader("Select New Excel File (MUST BE .xlsx)", type=["xlsx"], key="new_file")
-
-st.caption("💡 *Note: If your file is .xls or downloaded from a bank portal, please open it in Excel first and choose 'Save As -> Excel Workbook (*.xlsx)' before uploading.*")
+    new_file = st.file_uploader("Select New Excel File", type=["xlsx", "xls", "csv"], key="new_file")
 
 if old_file and new_file:
     try:
-        old_xl = pd.ExcelFile(old_file)
-        new_xl = pd.ExcelFile(new_file)
+        old_xl = load_excel_safely(old_file)
+        new_xl = load_excel_safely(new_file)
         
         col_s1, col_s2 = st.columns(2)
         with col_s1:
@@ -223,9 +251,6 @@ if old_file and new_file:
                 
     except Exception as e:
         error_msg = str(e)
-        if "not a zip file" in error_msg.lower():
-            st.error("Error: The uploaded file is not a valid modern Excel (.xlsx) file. It might be an older format or a web page saved as Excel. Please open the file in Excel and 'Save As -> Excel Workbook (*.xlsx)' then try again.")
-        else:
-            st.error(f"Error processing files: {error_msg}")
+        st.error(f"Error processing files: {error_msg}")
 else:
     st.info("Please upload both Old and New Excel files to begin.")
