@@ -134,10 +134,10 @@ if old_file and new_file:
         col_s1, col_s2 = st.columns(2)
         with col_s1:
             old_sheet = st.selectbox("Select Sheet for Old Data", old_xl.sheet_names, key="old_sheet")
-            old_header_row = st.number_input("Header Row for Old Data (e.g. 13)", min_value=1, value=1, key="old_header")
+            old_header_row = st.number_input("Header Row for Old Data (starts at 13)", min_value=1, value=13, key="old_header")
         with col_s2:
             new_sheet = st.selectbox("Select Sheet for New Data", new_xl.sheet_names, key="new_sheet")
-            new_header_row = st.number_input("Header Row for New Data (e.g. 13)", min_value=1, value=1, key="new_header")
+            new_header_row = st.number_input("Header Row for New Data (starts at 13)", min_value=1, value=13, key="new_header")
 
         old_df_raw = old_xl.parse(old_sheet, skiprows=old_header_row - 1)
         new_df_raw = new_xl.parse(new_sheet, skiprows=new_header_row - 1)
