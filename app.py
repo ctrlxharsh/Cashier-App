@@ -189,11 +189,20 @@ if old_file and new_file:
                         st.success("No mismatched fields found for matched names. / कोई मिसमैच नहीं मिला।")
                         
                 with tab3:
-                    st.write("Download the cleaned version of the New sheet (special characters removed, spaces trimmed). / नए डेटा का साफ किया हुआ वर्ज़न डाउनलोड करें (सिर्फ अक्षर और नंबर होंगे)।")
+                    st.write("Download the cleaned version of the entire New Excel file (all sheets, all rows, special characters removed). / पूरी नई एक्सेल फाइल का साफ किया हुआ वर्ज़न डाउनलोड करें (सभी शीट, सभी लाइनें, कोई विशेष अक्षर नहीं)।")
                     
+                    import openpyxl
+                    import re
+                    
+                    wb = openpyxl.load_workbook(new_file)
+                    for sheet in wb.worksheets:
+                        for row in sheet.iter_rows():
+                            for cell in row:
+                                if isinstance(cell.value, str):
+                                    cell.value = re.sub(r'[^a-zA-Z0-9\s]', '', cell.value).strip()
+                                    
                     output = io.BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                        new_df.to_excel(writer, index=False, sheet_name=str(new_sheet)[:31])
+                    wb.save(output)
                     excel_data = output.getvalue()
                     
                     st.download_button(
