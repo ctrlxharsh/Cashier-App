@@ -111,20 +111,20 @@ def match_entries(new_df, old_df, name_col, skip_cols):
 
     return missing_in_old, mismatches
 
-st.title("💸 Cashier Reconciliation Portal")
-st.markdown("Easily compare New spreadsheet entries against Old spreadsheet entries to identify new accounts and mismatches.")
+st.title("💸 Cashier Reconciliation Portal / कैशियर मिलान पोर्टल")
+st.markdown("Easily compare New spreadsheet entries against Old spreadsheet entries to identify new accounts and mismatches. / नए और पुराने स्प्रेडशीट की तुलना करें और नए अकाउंट और गलतियों का पता लगाएं।")
 
 st.divider()
 
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("📁 Upload Old Data")
-    old_file = st.file_uploader("Select Old Excel File", type=["xlsx", "xls"], key="old_file")
+    st.subheader("📁 Upload Old Data / पुराना डेटा अपलोड करें")
+    old_file = st.file_uploader("Select Old Excel File / पुरानी एक्सेल फाइल चुनें", type=["xlsx", "xls"], key="old_file")
 
 with col2:
-    st.subheader("📁 Upload New Data")
-    new_file = st.file_uploader("Select New Excel File", type=["xlsx", "xls"], key="new_file")
+    st.subheader("📁 Upload New Data / नया डेटा अपलोड करें")
+    new_file = st.file_uploader("Select New Excel File / नई एक्सेल फाइल चुनें", type=["xlsx", "xls"], key="new_file")
 
 if old_file and new_file:
     try:
@@ -133,52 +133,52 @@ if old_file and new_file:
         
         col_s1, col_s2 = st.columns(2)
         with col_s1:
-            old_sheet = st.selectbox("Select Sheet for Old Data", old_xl.sheet_names, key="old_sheet")
-            old_header_row = st.number_input("Header Row for Old Data (starts at 13)", min_value=1, value=13, key="old_header")
+            old_sheet = st.selectbox("Select Sheet for Old Data / पुराने डेटा के लिए शीट चुनें", old_xl.sheet_names, key="old_sheet")
+            old_header_row = st.number_input("Header Row for Old Data (starts at 13) / पुराने डेटा की हेडर लाइन (13 से शुरू)", min_value=1, value=13, key="old_header")
         with col_s2:
-            new_sheet = st.selectbox("Select Sheet for New Data", new_xl.sheet_names, key="new_sheet")
-            new_header_row = st.number_input("Header Row for New Data (starts at 13)", min_value=1, value=13, key="new_header")
+            new_sheet = st.selectbox("Select Sheet for New Data / नए डेटा के लिए शीट चुनें", new_xl.sheet_names, key="new_sheet")
+            new_header_row = st.number_input("Header Row for New Data (starts at 13) / नए डेटा की हेडर लाइन (13 से शुरू)", min_value=1, value=13, key="new_header")
 
         old_df_raw = old_xl.parse(old_sheet, skiprows=old_header_row - 1)
         new_df_raw = new_xl.parse(new_sheet, skiprows=new_header_row - 1)
         
         st.divider()
-        st.subheader("⚙️ Configuration")
+        st.subheader("⚙️ Configuration / सेटिंग्स")
         
         default_skips = ['Net Payble', 'Amount', 'S.No.', 'S.No ']
         all_cols = list(new_df_raw.columns)
         
         name_col_options = [c for c in all_cols if 'name' in str(c).lower()]
         default_name_index = all_cols.index(name_col_options[0]) if name_col_options else 0
-        name_col = st.selectbox("Select the 'Name' identifier column:", all_cols, index=default_name_index)
+        name_col = st.selectbox("Select the 'Name' identifier column: / 'Name' वाला कॉलम चुनें:", all_cols, index=default_name_index)
         
         available_skips = [c for c in all_cols if c != name_col]
         prefilled_skips = [c for c in default_skips if c in available_skips]
         
-        skip_cols = st.multiselect("Select fields to SKIP during comparison:", available_skips, default=prefilled_skips)
+        skip_cols = st.multiselect("Select fields to SKIP during comparison: / मिलान के दौरान किन कॉलम को छोड़ना है:", available_skips, default=prefilled_skips)
         
         st.write("")
-        if st.button("🚀 Run Reconciliation Analysis"):
-            with st.spinner("Cleaning and Matching Data..."):
+        if st.button("🚀 Run Reconciliation Analysis / मिलान शुरू करें"):
+            with st.spinner("Cleaning and Matching Data... / डेटा साफ और मैच हो रहा है..."):
                 old_df = clean_data(old_df_raw)
                 new_df = clean_data(new_df_raw)
                 
                 missing_in_old, mismatches = match_entries(new_df, old_df, name_col, skip_cols)
                 
-                st.success("✅ Analysis Complete!")
+                st.success("✅ Analysis Complete! / मिलान पूरा हुआ!")
                 
-                tab1, tab2, tab3 = st.tabs(["🆕 Missing in Old (New Entries)", "⚠️ Mismatched Details", "📥 Download Cleaned Data"])
+                tab1, tab2, tab3 = st.tabs(["🆕 Missing in Old (New Entries) / पुराने में नहीं हैं (नई एंट्री)", "⚠️ Mismatched Details / मिसमैच (गलतियाँ)", "📥 Download Cleaned Data / साफ डेटा डाउनलोड करें"])
                 
                 with tab1:
                     if missing_in_old:
-                        st.info(f"Found {len(missing_in_old)} entries present in New but missing in Old:")
+                        st.info(f"Found {len(missing_in_old)} entries present in New but missing in Old: / नए में {len(missing_in_old)} एंट्री हैं जो पुराने में नहीं हैं:")
                         st.dataframe(pd.DataFrame(missing_in_old), use_container_width=True)
                     else:
-                        st.success("No missing entries found. All names in New are present in Old.")
+                        st.success("No missing entries found. All names in New are present in Old. / कोई नई एंट्री नहीं मिली। सभी नाम पुराने में मौजूद हैं।")
                         
                 with tab2:
                     if mismatches:
-                        st.warning(f"Found {len(mismatches)} entries with mismatched fields (excluding skipped fields):")
+                        st.warning(f"Found {len(mismatches)} entries with mismatched fields (excluding skipped fields): / {len(mismatches)} एंट्री में गलतियां मिली हैं (छोड़े गए कॉलम को छोड़कर):")
                         for m in mismatches:
                             with st.expander(f"Mismatch for Name: {m['Name']}", expanded=True):
                                 if "S.No." in m:
@@ -186,10 +186,10 @@ if old_file and new_file:
                                 for col, diff in m['Differences'].items():
                                     st.markdown(f"- **{col}**: {diff}")
                     else:
-                        st.success("No mismatched fields found for matched names.")
+                        st.success("No mismatched fields found for matched names. / कोई मिसमैच नहीं मिला।")
                         
                 with tab3:
-                    st.write("Download the cleaned version of the New sheet (special characters removed, spaces trimmed).")
+                    st.write("Download the cleaned version of the New sheet (special characters removed, spaces trimmed). / नए डेटा का साफ किया हुआ वर्ज़न डाउनलोड करें (सिर्फ अक्षर और नंबर होंगे)।")
                     
                     output = io.BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -197,7 +197,7 @@ if old_file and new_file:
                     excel_data = output.getvalue()
                     
                     st.download_button(
-                        label="⬇️ Download Cleaned New Sheet",
+                        label="⬇️ Download Cleaned New Sheet / साफ की गई नई शीट डाउनलोड करें",
                         data=excel_data,
                         file_name="cleaned_new_data.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -207,4 +207,4 @@ if old_file and new_file:
     except Exception as e:
         st.error(f"Error processing files: {str(e)}")
 else:
-    st.info("Please upload both Old and New Excel files to begin.")
+    st.info("Please upload both Old and New Excel files to begin. / शुरू करने के लिए पुरानी और नई दोनों एक्सेल फाइल अपलोड करें।")
